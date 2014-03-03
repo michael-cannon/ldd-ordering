@@ -23,11 +23,7 @@ class LDD_Ordering extends Aihrus_Common {
 	const SLUG    = 'ldd_ordering_';
 	const VERSION = LDD_ORDERING_VERSION;
 
-	const PT = 'ldd-ordering';
-
-	public static $class        = __CLASS__;
-	public static $cpt_category = '';
-	public static $cpt_tags     = '';
+	public static $class = __CLASS__;
 	public static $menu_id;
 	public static $notice_key;
 	public static $plugin_assets;
@@ -48,15 +44,11 @@ class LDD_Ordering extends Aihrus_Common {
 		add_action( 'admin_init', array( __CLASS__, 'admin_init' ) );
 		// fixme add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
 		add_action( 'init', array( __CLASS__, 'init' ) );
-		// fixme add_action( 'widgets_init', array( __CLASS__, 'widgets_init' ) );
 		add_shortcode( 'ldd_ordering_shortcode', array( __CLASS__, 'ldd_ordering_shortcode' ) );
 	}
 
 
 	public static function admin_init() {
-		self::support_thumbnails();
-		self::update();
-
 		add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_action_links' ), 10, 2 );
 		add_filter( 'plugin_row_meta', array( __CLASS__, 'plugin_row_meta' ), 10, 2 );
 
@@ -75,13 +67,9 @@ class LDD_Ordering extends Aihrus_Common {
 	public static function init() {
 		load_plugin_textdomain( self::ID, false, 'ldd-ordering/languages' );
 
-		add_action( 'wp_ajax_ajax_process_post', array( __CLASS__, 'ajax_process_post' ) );
-
-		self::$cpt_category = self::PT . '-category';
-		self::$cpt_tags     = self::PT . '-post_tag';
-
-		self::init_post_type();
-		self::styles();
+		if ( LDD::do_load() ) {
+			self::styles();
+		}
 	}
 
 
@@ -147,39 +135,6 @@ class LDD_Ordering extends Aihrus_Common {
 		$text = sprintf( __( 'If your Legal Document Deliveries - Ordering display has gone to funky town, please <a href="%s">read the FAQ</a> about possible CSS fixes.', 'ldd-ordering' ), 'https://aihrus.zendesk.com/entries/23722573-Major-Changes-Since-2-10-0' );
 
 		aihr_notice_updated( $text );
-	}
-
-
-	/**
-	 *
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-	 */
-	public static function notice_donate( $disable_donate = null, $item_name = null ) {
-		$disable_donate = ldd_get_option( 'disable_donate', true );
-
-		parent::notice_donate( $disable_donate, LDD_ORDERING_NAME );
-	}
-
-
-	public static function update() {
-		$prior_version = ldd_get_option( 'admin_notices' );
-		if ( $prior_version ) {
-			if ( $prior_version < '0.0.1' )
-				add_action( 'admin_notices', array( __CLASS__, 'notice_0_0_1' ) );
-
-			if ( $prior_version < self::VERSION )
-				do_action( 'ldd_ordering_update' );
-
-			ldd_ordering_set_option( 'admin_notices' );
-		}
-
-		// display donate on major/minor version release
-		$donate_version = ldd_get_option( 'donate_version', false );
-		if ( ! $donate_version || ( $donate_version != self::VERSION && preg_match( '#\.0$#', self::VERSION ) ) ) {
-			add_action( 'admin_notices', array( __CLASS__, 'notice_donate' ) );
-			ldd_ordering_set_option( 'donate_version', self::VERSION );
-		}
 	}
 
 
@@ -257,125 +212,6 @@ class LDD_Ordering extends Aihrus_Common {
 			echo '</style>';
 
 			self::$styles_called = true;
-		}
-	}
-
-
-	/**
-	 *
-	 *
-	 * @SuppressWarnings(PHPMD.Superglobals)
-	 */
-	public static function do_load() {
-		$do_load = false;
-		if ( ! empty( $GLOBALS['pagenow'] ) && in_array( $GLOBALS['pagenow'], array( 'edit.php', 'options.php', 'plugins.php' ) ) ) {
-			$do_load = true;
-		} elseif ( ! empty( $_REQUEST['page'] ) && LDD_Settings::ID == $_REQUEST['page'] ) {
-			$do_load = true;
-		} elseif ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
-			$do_load = true;
-		}
-
-		return $do_load;
-	}
-
-
-	public static function widgets_init() {
-		register_widget( 'LDD_Ordering_Widget' );
-	}
-
-
-	public static function get_defaults( $single_view = false ) {
-		if ( empty( $single_view ) )
-			return apply_filters( 'ldd_ordering_defaults', ldd_get_options() );
-		else
-			return apply_filters( 'ldd_ordering_defaults_single', ldd_get_options() );
-	}
-
-
-	public static function init_post_type() {
-		$labels = array(
-			'add_new' => esc_html__( 'Add New' ),
-			'add_new_item' => esc_html__( 'Add New Delivery' ),
-			'edit_item' => esc_html__( 'Edit Delivery' ),
-			'name' => esc_html__( 'Deliveries' ),
-			'new_item' => esc_html__( 'Add New Delivery' ),
-			'not_found' => esc_html__( 'No deliveries found' ),
-			'not_found_in_trash' => esc_html__( 'No deliveries found in Trash' ),
-			'parent_item_colon' => null,
-			'search_items' => esc_html__( 'Search Deliveries' ),
-			'singular_name' => esc_html__( 'Delivery' ),
-			'view_item' => esc_html__( 'View Delivery' ),
-		);
-
-		$supports = array(
-			'title',
-			'editor',
-			'thumbnail',
-			'comments',
-			'publicize',
-		);
-
-		$taxonomies = array(
-			self::$cpt_category,
-			self::$cpt_tags,
-		);
-
-		self::register_taxonomies();
-
-		$args = array(
-			'label' => esc_html__( 'LDD Ordering' ),
-			'capability_type' => 'post',
-			'has_archive' => true,
-			'hierarchical' => false,
-			'labels' => $labels,
-			'public' => true,
-			'publicly_queryable' => true,
-			'query_var' => true,
-			'rewrite' => array(
-				'slug' => 'delivery',
-				'with_front' => false,
-			),
-			'supports' => $supports,
-			'taxonomies' => $taxonomies,
-		);
-
-		register_post_type( self::PT, $args );
-
-		register_taxonomy_for_object_type( self::$cpt_category, self::PT );
-		register_taxonomy_for_object_type( self::$cpt_tags, self::PT );
-	}
-
-
-	public static function register_taxonomies() {
-		$args = array(
-			'hierarchical' => true,
-			'show_admin_column' => true,
-		);
-		register_taxonomy( self::$cpt_category, self::PT, $args );
-
-		$args = array(
-			'show_admin_column' => true,
-			'update_count_callback' => '_update_post_term_count',
-		);
-		register_taxonomy( self::$cpt_tags, self::PT, $args );
-	}
-
-
-	public static function support_thumbnails() {
-		$feature       = 'post-thumbnails';
-		$feature_level = get_theme_support( $feature );
-
-		if ( true === $feature_level ) {
-			// already enabled for all post types
-			return;
-		} elseif ( false === $feature_level ) {
-			// none allowed, only enable for our own
-			add_theme_support( $feature, array( self::PT ) );
-		} else {
-			// add our own to list of supported
-			$feature_level[0][] = self::PT;
-			add_theme_support( $feature, $feature_level[0] );
 		}
 	}
 
