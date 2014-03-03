@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Legal Document Deliveries - Ordering
  * Plugin URI: http://aihr.us
- * Description: LDD Ordering system core
+ * Description: LDD ordering system 
  * Version: 1.0.0
  * Author: Michael Cannon
  * Author URI: http://aihr.us/resume/
@@ -26,9 +26,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-if ( ! defined( 'LDD_ORDERING_AIHR_VERSION' ) )
-	define( 'LDD_ORDERING_AIHR_VERSION', '1.0.3' );
-
 if ( ! defined( 'LDD_ORDERING_BASE' ) )
 	define( 'LDD_ORDERING_BASE', plugin_basename( __FILE__ ) );
 
@@ -45,16 +42,16 @@ if ( ! defined( 'LDD_ORDERING_NAME' ) )
 	define( 'LDD_ORDERING_NAME', 'Legal Document Deliveries - Ordering' );
 
 if ( ! defined( 'LDD_ORDERING_REQ_BASE' ) )
-	define( 'LDD_ORDERING_REQ_BASE', 'easy-digital-downloads/easy-digital-downloads.php' );
+	define( 'LDD_ORDERING_REQ_BASE', 'ldd-deliveries/ldd-deliveries.php' );
 
 if ( ! defined( 'LDD_ORDERING_REQ_NAME' ) )
-	define( 'LDD_ORDERING_REQ_NAME', 'Easy Digital Downloads' );
+	define( 'LDD_ORDERING_REQ_NAME', 'Legal Document Deliveries - Core ' );
 
 if ( ! defined( 'LDD_ORDERING_REQ_SLUG' ) )
-	define( 'LDD_ORDERING_REQ_SLUG', 'easy-digital-downloads' );
+	define( 'LDD_ORDERING_REQ_SLUG', 'ldd-deliveries' );
 
 if ( ! defined( 'LDD_ORDERING_REQ_VERSION' ) )
-	define( 'LDD_ORDERING_REQ_VERSION', '1.9.4' );
+	define( 'LDD_ORDERING_REQ_VERSION', '1.0.0' );
 
 if ( ! defined( 'LDD_ORDERING_VERSION' ) )
 	define( 'LDD_ORDERING_VERSION', '1.0.0' );
@@ -91,10 +88,6 @@ if ( ! function_exists( 'ldd_ordering_init' ) ) {
 			global $LDD_Ordering;
 			if ( is_null( $LDD_Ordering ) )
 				$LDD_Ordering = new LDD_Ordering();
-
-			global $LDD_Ordering_Settings;
-			if ( is_null( $LDD_Ordering_Settings ) )
-				$LDD_Ordering_Settings = new LDD_Ordering_Settings();
 			
 			do_action( 'ldd_ordering_init' );
 		}

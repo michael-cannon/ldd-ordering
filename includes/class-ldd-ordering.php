@@ -13,10 +13,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-require_once LDD_ORDERING_DIR_LIB . 'aihrus-framework/class-aihrus-common.php';
-require_once LDD_ORDERING_DIR_INC . 'class-ldd-ordering-settings.php';
-require_once LDD_ORDERING_DIR_INC . 'class-ldd-ordering-widget.php';
-
 if ( class_exists( 'LDD_Ordering' ) )
 	return;
 
@@ -64,7 +60,7 @@ class LDD_Ordering extends Aihrus_Common {
 		add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_action_links' ), 10, 2 );
 		add_filter( 'plugin_row_meta', array( __CLASS__, 'plugin_row_meta' ), 10, 2 );
 
-		self::$settings_link = '<a href="' . get_admin_url() . 'edit.php?post_type=' . self::PT . '&page=' . LDD_Ordering_Settings::ID . '">' . __( 'Settings', 'ldd-ordering' ) . '</a>';
+		self::$settings_link = '<a href="' . get_admin_url() . 'edit.php?post_type=' . LDD_Deliveries::PT . '&page=' . LDD_Deliveries_Settings::ID . '">' . __( 'Settings', 'ldd-ordering' ) . '</a>';
 	}
 
 
@@ -121,9 +117,9 @@ class LDD_Ordering extends Aihrus_Common {
 		
 		require_once LDD_ORDERING_DIR_INC . 'class-ldd-ordering-settings.php';
 
-		$delete_data = ldd_ordering_get_option( 'delete_data', false );
+		$delete_data = ldd_deliveries_get_option( 'delete_data', false );
 		if ( $delete_data ) {
-			delete_option( LDD_Ordering_Settings::ID );
+			delete_option( LDD_Deliveries_Settings::ID );
 			$wpdb->query( 'OPTIMIZE TABLE `' . $wpdb->options . '`' );
 		}
 	}
@@ -133,7 +129,7 @@ class LDD_Ordering extends Aihrus_Common {
 		if ( self::BASE != $file )
 			return $input;
 
-		$disable_donate = ldd_ordering_get_option( 'disable_donate', true );
+		$disable_donate = ldd_deliveries_get_option( 'disable_donate', true );
 		if ( $disable_donate )
 			return $input;
 
@@ -160,14 +156,14 @@ class LDD_Ordering extends Aihrus_Common {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	public static function notice_donate( $disable_donate = null, $item_name = null ) {
-		$disable_donate = ldd_ordering_get_option( 'disable_donate', true );
+		$disable_donate = ldd_deliveries_get_option( 'disable_donate', true );
 
 		parent::notice_donate( $disable_donate, LDD_ORDERING_NAME );
 	}
 
 
 	public static function update() {
-		$prior_version = ldd_ordering_get_option( 'admin_notices' );
+		$prior_version = ldd_deliveries_get_option( 'admin_notices' );
 		if ( $prior_version ) {
 			if ( $prior_version < '0.0.1' )
 				add_action( 'admin_notices', array( __CLASS__, 'notice_0_0_1' ) );
@@ -179,7 +175,7 @@ class LDD_Ordering extends Aihrus_Common {
 		}
 
 		// display donate on major/minor version release
-		$donate_version = ldd_ordering_get_option( 'donate_version', false );
+		$donate_version = ldd_deliveries_get_option( 'donate_version', false );
 		if ( ! $donate_version || ( $donate_version != self::VERSION && preg_match( '#\.0$#', self::VERSION ) ) ) {
 			add_action( 'admin_notices', array( __CLASS__, 'notice_donate' ) );
 			ldd_ordering_set_option( 'donate_version', self::VERSION );
@@ -274,7 +270,7 @@ class LDD_Ordering extends Aihrus_Common {
 		$do_load = false;
 		if ( ! empty( $GLOBALS['pagenow'] ) && in_array( $GLOBALS['pagenow'], array( 'edit.php', 'options.php', 'plugins.php' ) ) ) {
 			$do_load = true;
-		} elseif ( ! empty( $_REQUEST['page'] ) && LDD_Ordering_Settings::ID == $_REQUEST['page'] ) {
+		} elseif ( ! empty( $_REQUEST['page'] ) && LDD_Deliveries_Settings::ID == $_REQUEST['page'] ) {
 			$do_load = true;
 		} elseif ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 			$do_load = true;
@@ -291,9 +287,9 @@ class LDD_Ordering extends Aihrus_Common {
 
 	public static function get_defaults( $single_view = false ) {
 		if ( empty( $single_view ) )
-			return apply_filters( 'ldd_ordering_defaults', ldd_ordering_get_options() );
+			return apply_filters( 'ldd_ordering_defaults', ldd_deliveries_get_options() );
 		else
-			return apply_filters( 'ldd_ordering_defaults_single', ldd_ordering_get_options() );
+			return apply_filters( 'ldd_ordering_defaults_single', ldd_deliveries_get_options() );
 	}
 
 
