@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Legal Document Deliveries - Ordering
  * Plugin URI: http://aihr.us
- * Description: LDD ordering system 
+ * Description: LDD ordering system helper
  * Version: 1.0.0
  * Author: Michael Cannon
  * Author URI: http://aihr.us/resume/
