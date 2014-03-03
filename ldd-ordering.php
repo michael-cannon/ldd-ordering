@@ -42,13 +42,13 @@ if ( ! defined( 'LDD_ORDERING_NAME' ) )
 	define( 'LDD_ORDERING_NAME', 'Legal Document Deliveries - Ordering' );
 
 if ( ! defined( 'LDD_ORDERING_REQ_BASE' ) )
-	define( 'LDD_ORDERING_REQ_BASE', 'ldd-deliveries/ldd-deliveries.php' );
+	define( 'LDD_ORDERING_REQ_BASE', 'ldd/ldd.php' );
 
 if ( ! defined( 'LDD_ORDERING_REQ_NAME' ) )
 	define( 'LDD_ORDERING_REQ_NAME', 'Legal Document Deliveries - Core ' );
 
 if ( ! defined( 'LDD_ORDERING_REQ_SLUG' ) )
-	define( 'LDD_ORDERING_REQ_SLUG', 'ldd-deliveries' );
+	define( 'LDD_ORDERING_REQ_SLUG', 'ldd' );
 
 if ( ! defined( 'LDD_ORDERING_REQ_VERSION' ) )
 	define( 'LDD_ORDERING_REQ_VERSION', '1.0.0' );

@@ -24,7 +24,7 @@ If you find an issue, [let us know here](https://github.com/michael-cannon/ldd-o
 
 ## Support
 
-This is a developer's portal for Legal Document Deliveries - Ordering by Michael Cannon and should not be used for support. Please visit the [Legal Document Deliveries - Ordering Knowledge Base](https://aihrus.zendesk.com/categories/20102742-WordPress-Starter-Plugin) for frequently asked questions, offering ideas, or getting support.
+This is a developer's portal for Legal Document Deliveries - Ordering by Michael Cannon and should not be used for support. Please visit the [Legal Document Deliveries - Ordering Knowledge Base](https://aihrus.zendesk.com/categories/20102742) for frequently asked questions, offering ideas, or getting support.
 
 ## Contributions
 
@@ -34,7 +34,7 @@ There are various ways you can contribute:
 
 * [Raise an issue](https://github.com/michael-cannon/ldd-ordering/issues) on GitHub.
 * Fork Legal Document Deliveries - Ordering and send us a Pull Request with your bug fixes and/or new features.
-* [Translate Legal Document Deliveries - Ordering by Michael Cannon into different languages](https://aihrus.zendesk.com/entries/23691557-How-do-I-change-Testimonials-Widget-text-labels-).
+* [Translate Legal Document Deliveries - Ordering by Michael Cannon into different languages](https://aihrus.zendesk.com/entries/23691557).
 * Provide feedback and [suggestions on enhancements](https://github.com/michael-cannon/ldd-ordering/issues?direction=desc&labels=Enhancement&page=1&sort=created&state=open).
 
 ## Thank You
