@@ -23,6 +23,9 @@ class LDD_Ordering extends Aihrus_Common {
 	const SLUG    = 'ldd_ordering_';
 	const VERSION = LDD_ORDERING_VERSION;
 
+	const KEY_DELIVERY_ID = '_ldd_delivery_id';
+	const KEY_PAGE_COUNT  = '_ldd_page_count';
+
 	public static $class = __CLASS__;
 	public static $menu_id;
 	public static $notice_key;
@@ -40,6 +43,8 @@ class LDD_Ordering extends Aihrus_Common {
 
 		self::$plugin_assets = plugins_url( '/assets/', dirname( __FILE__ ) );
 		self::$plugin_assets = self::strip_protocol( self::$plugin_assets );
+
+		self::actions();
 
 		add_action( 'admin_init', array( __CLASS__, 'admin_init' ) );
 		// fixme add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
@@ -70,6 +75,11 @@ class LDD_Ordering extends Aihrus_Common {
 		if ( LDD::do_load() ) {
 			self::styles();
 		}
+	}
+
+
+	public static function actions() {
+		add_action( 'edd_update_payment_status', array( __CLASS__, 'edd_update_payment_status' ), 10, 3 );
 	}
 
 
@@ -213,6 +223,84 @@ class LDD_Ordering extends Aihrus_Common {
 
 			self::$styles_called = true;
 		}
+	}
+
+
+	public static function edd_complete_purchase( $payment_id ) {
+		$title = esc_html__( 'Delivery record for Payment #%1$s' );
+		$title = sprintf( $title, $payment_id );
+
+		// create new delivery record
+		$delivery_data = array(
+			'post_type' => LDD::PT,
+			'post_author' => null,
+			'post_status' => 'pending',
+			'post_title' => $title,
+		);
+
+		$delivery_id = wp_insert_post( $delivery_data, true );
+
+		// relate original
+		add_post_meta( $payment_id, self::KEY_DELIVERY_ID, $delivery_id );
+
+		$fields = cfm_get_checkout_fields( $payment_id );
+		$docs   = ! empty( $fields['legal_document'] ) ? $fields['legal_document'] : false;
+
+		$page_count = 0;
+		if ( ! empty( $docs ) ) {
+			$docs = is_array( $docs ) ? $docs : array( $docs );
+			foreach ( $docs as $key => $doc_id ) {
+				$file = get_attached_file( $doc_id );
+
+				// pull files over
+				self::add_media( $delivery_id, $file, null, false );
+
+				$page_count += self::getNumPagesPdf( $file );
+			}
+		}
+
+		// set page count
+		add_post_meta( $delivery_id, self::KEY_PAGE_COUNT, $page_count );
+	}
+
+
+	/**
+	 *
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 */
+	public static function edd_update_payment_status( $payment_id, $new_status, $old_status ) {
+		if ( 'publish' == $new_status )
+			self::edd_complete_purchase( $payment_id );
+	}
+
+
+	/**
+	 *
+	 *
+	 * @ref http://stackoverflow.com/questions/1143841/count-the-number-of-pages-in-a-pdf-in-only-php
+	 */
+	public static function getNumPagesPdf( $filepath ) {
+		$fp  = fopen( preg_replace( '/\[( .*? )\]/i', '', $filepath ), 'r' );
+		$max = 0;
+		while ( ! feof( $fp ) ) {
+			$line = fgets( $fp, 255 );
+			if ( preg_match( '/\/Count [0-9]+/', $line, $matches ) ) {
+				preg_match( '/[0-9]+/', $matches[0], $matches2 );
+				if ( $max < $matches2[0] )
+					$max = $matches2[0];
+			}
+		}
+
+		fclose( $fp );
+
+		if ( $max == 0 ) {
+			error_log( print_r( $filepath, true ) . ':' . __LINE__ . ':' . basename( __FILE__ ) );
+			$im  = new imagick( $filepath );
+			$max = $im->getNumberImages();
+		}
+
+		return $max;
 	}
 
 

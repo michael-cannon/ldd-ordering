@@ -81,9 +81,6 @@ add_action( 'plugins_loaded', 'ldd_ordering_init', 99 );
  */
 if ( ! function_exists( 'ldd_ordering_init' ) ) {
 	function ldd_ordering_init() {
-		if ( ! is_admin() )
-			return;
-
 		if ( LDD_Ordering::version_check() ) {
 			global $LDD_Ordering;
 			if ( is_null( $LDD_Ordering ) )
