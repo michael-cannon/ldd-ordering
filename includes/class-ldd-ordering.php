@@ -13,6 +13,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+require_once LDD_ORDERING_DIR_LIB . 'class-redrokk-metabox-class.php';
+
 if ( class_exists( 'LDD_Ordering' ) )
 	return;
 
@@ -24,7 +26,7 @@ class LDD_Ordering extends Aihrus_Common {
 	const VERSION = LDD_ORDERING_VERSION;
 
 	const KEY_DELIVERY_ID = '_ldd_delivery_id';
-	const KEY_PAGE_COUNT  = '_ldd_page_count';
+	const KEY_PAGE_COUNT  = 'ldd_page_count';
 
 	public static $class = __CLASS__;
 	public static $menu_id;
@@ -58,6 +60,8 @@ class LDD_Ordering extends Aihrus_Common {
 		add_filter( 'plugin_row_meta', array( __CLASS__, 'plugin_row_meta' ), 10, 2 );
 
 		self::$settings_link = '<a href="' . get_admin_url() . 'edit.php?post_type=' . LDD::PT . '&page=' . LDD_Settings::ID . '">' . __( 'Settings', 'ldd-ordering' ) . '</a>';
+
+		self::add_meta_box();
 	}
 
 
@@ -301,6 +305,36 @@ class LDD_Ordering extends Aihrus_Common {
 		}
 
 		return $max;
+	}
+
+
+	/**
+	 *
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+	 */
+	public static function add_meta_box() {
+		$fields = array(
+			array(
+				'name' => esc_html__( 'Page Count' ),
+				'id' => self::KEY_PAGE_COUNT,
+				'type' => 'text',
+				'desc' => '',
+			),
+		);
+
+		$fields = apply_filters( 'ldd_ordering_meta_box', $fields );
+
+		$meta_box = redrokk_metabox_class::getInstance(
+			self::ID,
+			array(
+				'title' => esc_html__( 'Delivery Data' ),
+				'description' => '',
+				'_object_types' => LDD::PT,
+				'priority' => 'high',
+				'_fields' => $fields,
+			)
+		);
 	}
 
 
