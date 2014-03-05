@@ -3,7 +3,9 @@
 ## master
 
 ## 1.0.0
+* Add delivery details to delivery record
 * Add page count and delivery ids
+* Add point of contact details to delivery record
 * Disable donate and premium links
 * Enable global actions
 * Initial code release 

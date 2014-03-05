@@ -26,6 +26,7 @@ class LDD_Ordering extends Aihrus_Common {
 	const VERSION = LDD_ORDERING_VERSION;
 
 	const KEY_DELIVERY_ID = '_ldd_delivery_id';
+	const KEY_PAYMENT_ID  = '_ldd_payment_id';
 	const KEY_PAGE_COUNT  = 'ldd_page_count';
 
 	public static $class = __CLASS__;
@@ -61,7 +62,8 @@ class LDD_Ordering extends Aihrus_Common {
 
 		self::$settings_link = '<a href="' . get_admin_url() . 'edit.php?post_type=' . LDD::PT . '&page=' . LDD_Settings::ID . '">' . __( 'Settings', 'ldd-ordering' ) . '</a>';
 
-		self::add_meta_box();
+		self::add_delivery_meta_box();
+		self::add_poc_meta_box();
 	}
 
 
@@ -244,14 +246,20 @@ class LDD_Ordering extends Aihrus_Common {
 
 		$delivery_id = wp_insert_post( $delivery_data, true );
 
-		// relate original
+		// relate delivery record to order payment and vice versa
 		add_post_meta( $payment_id, self::KEY_DELIVERY_ID, $delivery_id );
+		add_post_meta( $delivery_id, self::KEY_PAYMENT_ID, $payment_id );
 
+		// carry over delivery details
 		$fields = cfm_get_checkout_fields( $payment_id );
-		$docs   = ! empty( $fields['legal_document'] ) ? $fields['legal_document'] : false;
+		foreach ( $fields as $key => $value ) {
+			add_post_meta( $delivery_id, $key, $value );
+		}
 
-		$page_count = 0;
-		if ( ! empty( $docs ) ) {
+		if ( ! empty( $fields['court_filings'] ) ) {
+			$page_count = 0;
+
+			$docs = $fields['court_filings'];
 			$docs = is_array( $docs ) ? $docs : array( $docs );
 			foreach ( $docs as $key => $doc_id ) {
 				$file = get_attached_file( $doc_id );
@@ -261,10 +269,31 @@ class LDD_Ordering extends Aihrus_Common {
 
 				$page_count += self::getNumPagesPdf( $file );
 			}
+
+			// set page count
+			add_post_meta( $delivery_id, self::KEY_PAGE_COUNT, $page_count );
 		}
 
-		// set page count
-		add_post_meta( $delivery_id, self::KEY_PAGE_COUNT, $page_count );
+		// add point of contact details
+		$user_info = edd_get_payment_meta_user_info( $payment_id );
+
+		$name = $user_info['first_name'] . ' ' . $user_info['last_name'];
+		add_post_meta( $delivery_id, 'name', $name );
+
+		$email = $user_info['email'];
+		add_post_meta( $delivery_id, 'email', $email );
+
+		$address     = $user_info['address'];
+		$address_new = $address['line1'];
+		if ( ! empty( $address['line2'] ) )
+			$address_new .= "\n" . $address['line2'];
+
+		$address_new .= "\n" . $address['city'];
+		$address_new .= ', ' . $address['state'];
+		$address_new .= ' ' . $address['zip'];
+		$address_new .= "\n" . $address['country'];
+
+		add_post_meta( $delivery_id, 'address', $address_new );
 	}
 
 
@@ -303,7 +332,6 @@ class LDD_Ordering extends Aihrus_Common {
 			$max = $im->getNumberImages();
 		}
 
-error_log( print_r( $max . ' ' . basename( $filepath ), true ) . ':' . __LINE__ . ':' . basename( __FILE__ ) );
 		return $max;
 	}
 
@@ -313,7 +341,7 @@ error_log( print_r( $max . ' ' . basename( $filepath ), true ) . ':' . __LINE__ 
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedLocalVariable)
 	 */
-	public static function add_meta_box() {
+	public static function add_delivery_meta_box() {
 		$fields = array(
 			array(
 				'name' => esc_html__( 'Page Count' ),
@@ -321,14 +349,110 @@ error_log( print_r( $max . ' ' . basename( $filepath ), true ) . ':' . __LINE__ 
 				'type' => 'text',
 				'desc' => '',
 			),
+			array(
+				'name' => esc_html__( 'Delivery County' ),
+				'id' => 'delivery_county',
+				'type' => 'text',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Delivery Court' ),
+				'id' => 'delivery_court',
+				'type' => 'text',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Courthouse Address' ),
+				'id' => 'courthouse_address',
+				'type' => 'textarea',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Court Filings' ),
+				'id' => 'court_filings',
+				'type' => 'text',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Special Instructions' ),
+				'id' => 'special_instructions',
+				'type' => 'textarea',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Shared Notifications' ),
+				'id' => 'shared_notifications',
+				'type' => 'textarea',
+				'desc' => '',
+			),
 		);
 
-		$fields = apply_filters( 'ldd_ordering_meta_box', $fields );
+		$fields = apply_filters( 'ldd_ordering_delivery_meta_box', $fields );
 
 		$meta_box = redrokk_metabox_class::getInstance(
-			self::ID,
+			self::ID . '-delivery',
 			array(
 				'title' => esc_html__( 'Delivery Data' ),
+				'description' => '',
+				'_object_types' => LDD::PT,
+				'priority' => 'high',
+				'_fields' => $fields,
+			)
+		);
+	}
+
+
+	/**
+	 *
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+	 */
+	public static function add_poc_meta_box() {
+		$fields = array(
+			array(
+				'name' => esc_html__( 'Company' ),
+				'id' => 'company',
+				'type' => 'text',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Name' ),
+				'id' => 'name',
+				'type' => 'text',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Job Title' ),
+				'id' => 'job_title',
+				'type' => 'text',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Telephone' ),
+				'id' => 'telephone',
+				'type' => 'text',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Email' ),
+				'id' => 'email',
+				'type' => 'text',
+				'desc' => '',
+			),
+			array(
+				'name' => esc_html__( 'Address' ),
+				'id' => 'address',
+				'type' => 'textarea',
+				'desc' => '',
+			),
+		);
+
+		$fields = apply_filters( 'ldd_ordering_poc_meta_box', $fields );
+
+		$meta_box = redrokk_metabox_class::getInstance(
+			self::ID . '-poc',
+			array(
+				'title' => esc_html__( 'Point of Contact' ),
 				'description' => '',
 				'_object_types' => LDD::PT,
 				'priority' => 'high',
