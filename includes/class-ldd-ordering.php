@@ -299,11 +299,11 @@ class LDD_Ordering extends Aihrus_Common {
 		fclose( $fp );
 
 		if ( $max == 0 ) {
-			error_log( print_r( $filepath, true ) . ':' . __LINE__ . ':' . basename( __FILE__ ) );
-			$im  = new imagick( $filepath );
+			$im  = new Imagick( $filepath );
 			$max = $im->getNumberImages();
 		}
 
+error_log( print_r( $max . ' ' . basename( $filepath ), true ) . ':' . __LINE__ . ':' . basename( __FILE__ ) );
 		return $max;
 	}
 
