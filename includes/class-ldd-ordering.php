@@ -38,8 +38,6 @@ class LDD_Ordering extends Aihrus_Common {
 	public static $styles        = array();
 	public static $styles_called = false;
 
-	public static $post_id;
-
 
 	public function __construct() {
 		parent::__construct();
@@ -48,6 +46,7 @@ class LDD_Ordering extends Aihrus_Common {
 		self::$plugin_assets = self::strip_protocol( self::$plugin_assets );
 
 		self::actions();
+		self::filters();
 
 		add_action( 'admin_init', array( __CLASS__, 'admin_init' ) );
 		// fixme add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
@@ -86,6 +85,11 @@ class LDD_Ordering extends Aihrus_Common {
 
 	public static function actions() {
 		add_action( 'edd_update_payment_status', array( __CLASS__, 'edd_update_payment_status' ), 10, 3 );
+	}
+
+
+	public static function filters() {
+		add_filter( 'edd_email_template_tags', array( __CLASS__, 'edd_email_template_tags' ), 10, 3 );
 	}
 
 
@@ -275,25 +279,11 @@ class LDD_Ordering extends Aihrus_Common {
 		}
 
 		// add point of contact details
-		$user_info = edd_get_payment_meta_user_info( $payment_id );
-
-		$name = $user_info['first_name'] . ' ' . $user_info['last_name'];
+		$name = edd_email_tag_fullname( $payment_id );
 		add_post_meta( $delivery_id, 'name', $name );
 
-		$email = $user_info['email'];
+		$email = edd_get_payment_user_email( $payment_id );
 		add_post_meta( $delivery_id, 'email', $email );
-
-		$address     = $user_info['address'];
-		$address_new = $address['line1'];
-		if ( ! empty( $address['line2'] ) )
-			$address_new .= "\n" . $address['line2'];
-
-		$address_new .= "\n" . $address['city'];
-		$address_new .= ', ' . $address['state'];
-		$address_new .= ' ' . $address['zip'];
-		$address_new .= "\n" . $address['country'];
-
-		add_post_meta( $delivery_id, 'address', $address_new );
 	}
 
 
@@ -439,12 +429,6 @@ class LDD_Ordering extends Aihrus_Common {
 				'type' => 'text',
 				'desc' => '',
 			),
-			array(
-				'name' => esc_html__( 'Address' ),
-				'id' => 'address',
-				'type' => 'textarea',
-				'desc' => '',
-			),
 		);
 
 		$fields = apply_filters( 'ldd_ordering_poc_meta_box', $fields );
@@ -459,6 +443,27 @@ class LDD_Ordering extends Aihrus_Common {
 				'_fields' => $fields,
 			)
 		);
+	}
+
+
+	/**
+	 *
+	 *
+	 * @SuppressWarnings(PHPMD.LongVariable)
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 */
+	public static function edd_email_template_tags( $message, $payment_data, $payment_id ) {
+		$delivery_id = get_post_meta( $payment_id, LDD_Ordering::KEY_DELIVERY_ID, true );
+
+		$ldd_company   = get_post_meta( $delivery_id, 'company', true );
+		$ldd_telephone = get_post_meta( $delivery_id, 'telephone', true );
+		$ldd_job_title = get_post_meta( $delivery_id, 'job_title', true );
+
+		$message = str_replace( '{ldd_company}', $ldd_company, $message );
+		$message = str_replace( '{ldd_telephone}', $ldd_telephone, $message );
+		$message = str_replace( '{ldd_job_title}', $ldd_job_title, $message );
+
+		return $message;
 	}
 
 }
