@@ -7,6 +7,7 @@
 * Add edd_email_template_tags
 * Add page count and delivery ids
 * Add point of contact details to delivery record
+* Add pretty_print_delivery_details
 * Disable donate and premium links
 * Enable global actions
 * Initial code release 

@@ -453,6 +453,8 @@ class LDD_Ordering extends Aihrus_Common {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	public static function edd_email_template_tags( $message, $payment_data, $payment_id ) {
+		$delivery_details = self::pretty_print_delivery_details( $payment_id );
+
 		$delivery_id = get_post_meta( $payment_id, LDD_Ordering::KEY_DELIVERY_ID, true );
 
 		$ldd_company   = get_post_meta( $delivery_id, 'company', true );
@@ -460,10 +462,60 @@ class LDD_Ordering extends Aihrus_Common {
 		$ldd_job_title = get_post_meta( $delivery_id, 'job_title', true );
 
 		$message = str_replace( '{ldd_company}', $ldd_company, $message );
-		$message = str_replace( '{ldd_telephone}', $ldd_telephone, $message );
+		$message = str_replace( '{ldd_delivery_details}', $delivery_details, $message );
 		$message = str_replace( '{ldd_job_title}', $ldd_job_title, $message );
+		$message = str_replace( '{ldd_telephone}', $ldd_telephone, $message );
 
 		return $message;
+	}
+
+
+	public static function pretty_print_delivery_details( $payment_id ) {
+		$fields_id = get_post_meta( $payment_id, CFM_Render_Form::$config_id, true );
+		if ( empty( $fields_id ) )
+			return '';
+
+		$fields = get_post_meta( $fields_id, CFM_Render_Form::$meta_key, true );
+		if ( empty( $fields ) )
+			return '';
+
+		$details     = array();
+		$skip_fields = array(
+			'company',
+			'job_title',
+			'telephone',
+		);
+		$text_format = esc_html__( '%1$s: %2$s' );
+		foreach ( $fields as $field ) {
+			if ( empty( $field['name'] ) || empty( $field['is_meta'] ) || 'yes' != $field['is_meta'] )
+				continue;
+
+			$key = $field['name'];
+			if ( in_array( $key, $skip_fields ) )
+				continue;
+
+			$label = $field['label'];
+
+			if ( empty( $field['count'] ) ) {
+				$data = get_post_meta( $payment_id, $key, true );
+			} else {
+				$files = get_post_meta( $payment_id, $key );
+				$data  = '<ul>';
+				foreach ( $files as $key => $file ) {
+					$data .= '<li>';
+					$data .= wp_get_attachment_link( $file );
+					$data .= '</li>';
+				}
+
+				$data .= '</ul>';
+			}
+
+			$details[ $key ] = sprintf( $text_format, $label, $data );
+		}
+
+		$delivery_details = implode( "\n\n", $details );
+
+		return $delivery_details;
 	}
 
 }
