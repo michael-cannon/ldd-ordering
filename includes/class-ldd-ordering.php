@@ -13,7 +13,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-require_once LDD_ORDERING_DIR_LIB . 'class-redrokk-metabox-class.php';
+require_once AIHR_DIR_LIB . 'class-redrokk-metabox-class.php';
 
 if ( class_exists( 'LDD_Ordering' ) )
 	return;
@@ -240,10 +240,12 @@ class LDD_Ordering extends Aihrus_Common {
 		$title = esc_html__( 'Delivery record for Payment #%1$s' );
 		$title = sprintf( $title, $payment_id );
 
+		$client_id = edd_get_payment_user_id( $payment_id );
+
 		// create new delivery record
 		$delivery_data = array(
 			'post_type' => LDD::PT,
-			'post_author' => null,
+			'post_author' => $client_id,
 			'post_status' => 'pending',
 			'post_title' => $title,
 		);
@@ -360,7 +362,7 @@ class LDD_Ordering extends Aihrus_Common {
 			array(
 				'name' => esc_html__( 'Court Filings' ),
 				'id' => 'court_filings',
-				'type' => 'text',
+				'type' => 'ldd_get_attachment_links',
 				'desc' => '',
 			),
 			array(
@@ -500,14 +502,7 @@ class LDD_Ordering extends Aihrus_Common {
 				$data = get_post_meta( $payment_id, $key, true );
 			} else {
 				$files = get_post_meta( $payment_id, $key );
-				$data  = '<ul>';
-				foreach ( $files as $key => $file ) {
-					$data .= '<li>';
-					$data .= wp_get_attachment_link( $file );
-					$data .= '</li>';
-				}
-
-				$data .= '</ul>';
+				$data  = self::get_attachment_links( $files );
 			}
 
 			$details[ $key ] = sprintf( $text_format, $label, $data );
@@ -516,6 +511,23 @@ class LDD_Ordering extends Aihrus_Common {
 		$delivery_details = implode( "\n\n", $details );
 
 		return $delivery_details;
+	}
+
+
+	public static function get_attachment_links( $files ) {
+		if ( ! is_array( $files ) )
+			return;
+
+		$data = '<ul>';
+		foreach ( $files as $key => $file ) {
+			$data .= '<li>';
+			$data .= wp_get_attachment_link( $file );
+			$data .= '</li>';
+		}
+
+		$data .= '</ul>';
+
+		return $data;
 	}
 
 }

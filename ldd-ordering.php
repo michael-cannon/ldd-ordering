@@ -67,6 +67,7 @@ if ( ! ldd_ordering_requirements_check() ) {
 	return false;
 }
 
+require_once LDD_ORDERING_DIR_INC . 'functions.php';
 require_once LDD_ORDERING_DIR_INC . 'class-ldd-ordering.php';
 
 
