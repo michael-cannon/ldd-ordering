@@ -118,7 +118,7 @@ class LDD_Ordering extends Aihrus_Common {
 			return;
 
 		global $wpdb;
-		
+
 		require_once LDD_ORDERING_DIR_INC . 'class-ldd-ordering-settings.php';
 
 		$delete_data = ldd_get_option( 'delete_data', false );
@@ -460,7 +460,6 @@ class LDD_Ordering extends Aihrus_Common {
 			)
 		);
 	}
-
 
 }
 
