@@ -237,7 +237,7 @@ class LDD_Ordering extends Aihrus_Common {
 
 
 	public static function edd_complete_purchase( $payment_id ) {
-		$title = esc_html__( 'Delivery record for Payment #%1$s' );
+		$title = esc_html__( 'Delivery Record for Payment #%1$s' );
 		$title = sprintf( $title, $payment_id );
 
 		$client_id = edd_get_payment_user_id( $payment_id );
@@ -286,6 +286,10 @@ class LDD_Ordering extends Aihrus_Common {
 
 		$email = edd_get_payment_user_email( $payment_id );
 		add_post_meta( $delivery_id, 'email', $email );
+
+		$order = get_post( $payment_id );
+		add_post_meta( $delivery_id, 'order_date', $order->post_date );
+		add_post_meta( $delivery_id, 'last_update', $order->post_date );
 	}
 
 
@@ -339,55 +343,46 @@ class LDD_Ordering extends Aihrus_Common {
 				'name' => esc_html__( 'Page Count' ),
 				'id' => self::KEY_PAGE_COUNT,
 				'type' => 'text',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Delivery County' ),
 				'id' => 'delivery_county',
 				'type' => 'text',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Delivery Court' ),
 				'id' => 'delivery_court',
 				'type' => 'text',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Courthouse Address' ),
 				'id' => 'courthouse_address',
 				'type' => 'textarea',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Court Filings' ),
 				'id' => 'court_filings',
 				'type' => 'ldd_get_attachment_links',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Special Instructions' ),
 				'id' => 'special_instructions',
 				'type' => 'textarea',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Shared Notifications' ),
 				'id' => 'shared_notifications',
 				'type' => 'textarea',
-				'desc' => '',
 			),
 		);
 
 		$fields = apply_filters( 'ldd_ordering_delivery_meta_box', $fields );
 
 		$meta_box = redrokk_metabox_class::getInstance(
-			self::ID . '-delivery',
+			self::ID . '-request',
 			array(
-				'title' => esc_html__( 'Delivery Data' ),
-				'description' => '',
+				'title' => esc_html__( 'Request Details' ),
 				'_object_types' => LDD::PT,
-				'priority' => 'high',
 				'_fields' => $fields,
 			)
 		);
@@ -405,31 +400,26 @@ class LDD_Ordering extends Aihrus_Common {
 				'name' => esc_html__( 'Company' ),
 				'id' => 'company',
 				'type' => 'text',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Name' ),
 				'id' => 'name',
 				'type' => 'text',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Job Title' ),
 				'id' => 'job_title',
 				'type' => 'text',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Telephone' ),
 				'id' => 'telephone',
 				'type' => 'text',
-				'desc' => '',
 			),
 			array(
 				'name' => esc_html__( 'Email' ),
 				'id' => 'email',
 				'type' => 'text',
-				'desc' => '',
 			),
 		);
 
@@ -439,9 +429,7 @@ class LDD_Ordering extends Aihrus_Common {
 			self::ID . '-poc',
 			array(
 				'title' => esc_html__( 'Point of Contact' ),
-				'description' => '',
 				'_object_types' => LDD::PT,
-				'priority' => 'high',
 				'_fields' => $fields,
 			)
 		);

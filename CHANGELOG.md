@@ -6,6 +6,7 @@
 * Add delivery details to delivery record
 * Add document links to delivery record
 * Add edd_email_template_tags
+* Add order_date, last_update details
 * Add page count and delivery ids
 * Add point of contact details to delivery record
 * Add pretty_print_delivery_details
@@ -18,3 +19,4 @@
 * Remove mass processor
 * Remove Process plugin action link
 * Set plugin URL to aihr.us
+* Verbiage updates
