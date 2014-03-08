@@ -287,9 +287,9 @@ class LDD_Ordering extends Aihrus_Common {
 		$email = edd_get_payment_user_email( $payment_id );
 		add_post_meta( $delivery_id, 'email', $email );
 
-		$order = get_post( $payment_id );
-		add_post_meta( $delivery_id, 'order_date', $order->post_date );
-		add_post_meta( $delivery_id, 'last_update', $order->post_date );
+		$payment = get_post( $payment_id );
+		add_post_meta( $delivery_id, 'order_date', $payment->post_date );
+		add_post_meta( $delivery_id, 'last_update', $payment->post_date );
 	}
 
 
