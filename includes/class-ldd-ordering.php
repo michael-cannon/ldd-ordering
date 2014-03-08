@@ -340,14 +340,9 @@ class LDD_Ordering extends Aihrus_Common {
 	public static function add_delivery_meta_box() {
 		$fields = array(
 			array(
-				'name' => esc_html__( 'Servicing Purchased' ),
+				'name' => esc_html__( 'Order Summary' ),
 				'id' => self::KEY_PAYMENT_ID,
-				'type' => 'text',
-			),
-			array(
-				'name' => esc_html__( 'Page Count' ),
-				'id' => self::KEY_PAGE_COUNT,
-				'type' => 'text',
+				'type' => 'ldd_get_order_summary',
 			),
 			array(
 				'name' => esc_html__( 'Delivery County' ),
@@ -375,9 +370,9 @@ class LDD_Ordering extends Aihrus_Common {
 				'type' => 'textarea',
 			),
 			array(
-				'name' => esc_html__( 'Shared Notifications' ),
-				'id' => 'shared_notifications',
-				'type' => 'textarea',
+				'name' => esc_html__( 'Page Count' ),
+				'id' => self::KEY_PAGE_COUNT,
+				'type' => 'text',
 			),
 		);
 
@@ -425,6 +420,11 @@ class LDD_Ordering extends Aihrus_Common {
 				'name' => esc_html__( 'Email' ),
 				'id' => 'email',
 				'type' => 'text',
+			),
+			array(
+				'name' => esc_html__( 'Shared Notifications' ),
+				'id' => 'shared_notifications',
+				'type' => 'textarea',
 			),
 		);
 
@@ -511,14 +511,41 @@ class LDD_Ordering extends Aihrus_Common {
 		if ( ! is_array( $files ) )
 			return;
 
+		$edit_text = esc_html__( 'replace' );
+
 		$data = '<ul>';
 		foreach ( $files as $key => $file ) {
 			$data .= '<li>';
 			$data .= wp_get_attachment_link( $file );
+			$data .= ' ';
+			ob_start();
+			edit_post_link( $edit_text, '(', ')', $file );
+			$data .= ob_get_clean();
 			$data .= '</li>';
 		}
 
 		$data .= '</ul>';
+
+		return $data;
+	}
+
+
+	public static function get_order_summary( $payment_id ) {
+		$cart = edd_get_purchase_download_links( $payment_id );
+
+		$payment = get_post( $payment_id );
+		$status  = edd_get_payment_status( $payment, true );
+
+		$payment_date = $payment->post_date;
+
+		$date = date_i18n( get_option( 'date_format' ), strtotime( $payment_date ) );
+		$time = date_i18n( get_option( 'time_format' ), strtotime( $payment_date ) );
+
+		$order_link = LDD_Operations::get_order_link( $payment_id );
+
+		$text_positioning = esc_html__( '%2$s. %3$s %4$s. %5$s%1$s' );
+
+		$data = sprintf( $text_positioning, $cart, $status, $date, $time, $order_link );
 
 		return $data;
 	}

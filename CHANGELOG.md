@@ -6,6 +6,8 @@
 * Add delivery details to delivery record
 * Add document links to delivery record
 * Add edd_email_template_tags
+* Add file edit links
+* Add order summary
 * Add order_date, last_update details
 * Add page count and delivery ids
 * Add point of contact details to delivery record

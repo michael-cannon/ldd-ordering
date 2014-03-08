@@ -21,4 +21,17 @@ if ( ! function_exists( 'ldd_get_attachment_links' ) ) {
 		echo LDD_Ordering::get_attachment_links( $files );
 	}
 }
+
+
+if ( ! function_exists( 'ldd_get_order_summary' ) ) {
+	function ldd_get_order_summary( $args, $field, $meta ) {
+		if ( ! empty( $meta[0] ) )
+			$payment_id = $meta[0];
+		else
+			return;
+
+		echo LDD_Ordering::get_order_summary( $payment_id );
+	}
+}
+
 ?>
