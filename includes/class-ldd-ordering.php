@@ -340,6 +340,11 @@ class LDD_Ordering extends Aihrus_Common {
 	public static function add_delivery_meta_box() {
 		$fields = array(
 			array(
+				'name' => esc_html__( 'Servicing Purchased' ),
+				'id' => self::KEY_PAYMENT_ID,
+				'type' => 'text',
+			),
+			array(
 				'name' => esc_html__( 'Page Count' ),
 				'id' => self::KEY_PAGE_COUNT,
 				'type' => 'text',
