@@ -13,6 +13,7 @@
 * Add page count and delivery ids
 * Add point of contact details to delivery record
 * Add pretty_print_delivery_details
+* Apply document fees
 * Disable donate and premium links
 * Disable page count bits
 * Enable global actions

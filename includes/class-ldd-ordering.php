@@ -79,6 +79,7 @@ class LDD_Ordering extends Aihrus_Common {
 
 	public static function actions() {
 		// fixme add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
+		add_action( 'edd_checkout_error_checks', array( __CLASS__, 'edd_checkout_error_checks' ), 10, 2 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'scripts' ) );
 		add_action( 'admin_init', array( __CLASS__, 'admin_init' ) );
 		add_action( 'edd_post_add_to_cart', array( __CLASS__, 'edd_post_add_to_cart' ), 10, 2 );
@@ -564,7 +565,7 @@ class LDD_Ordering extends Aihrus_Common {
 		$fee_id = ldd_get_option( 'filing_fee_id' );
 		if ( $fee_id == $download_id ) {
 			$amount = ldd_get_option( 'filing_fee_amount' );
-			$label  = esc_html__( 'Filing Fee Servicing' );
+			$label  = esc_html__( 'Filing fee surcharge' );
 			EDD()->fees->add_fee( $amount, $label, 'ffs' );
 		}
 	}
@@ -597,9 +598,44 @@ class LDD_Ordering extends Aihrus_Common {
 			'std' => 50,
 		);
 
+		$settings['document_fee_heading'] = array(
+			'desc' => esc_html__( 'Document Fees' ),
+			'type' => 'heading',
+		);
+
+		$settings['document_fee_amount'] = array(
+			'title' => esc_html__( 'Amount' ),
+			'std' => 5,
+		);
+
 		return $settings;
 	}
 
+	public static function edd_checkout_error_checks( $valid_data, $post ) {
+		// error_log( print_r( func_get_args(), true ) . ':' . __LINE__ . ':' . basename( __FILE__ ) );
+
+		// fixme check cart for one delivery option
+		// fixme $text = esc_html__( 'No delivery option selected' );
+		// fixme edd_set_error( 'no_delivery_option', $text );
+
+		if ( ! empty( $post['cfm_files']['court_filings'] ) ) {
+			$doc_count = count( $post['cfm_files']['court_filings'] );
+			$charge_for = $doc_count - 1;
+			if ( 1 <= $charge_for ) {
+				$amount   = ldd_get_option( 'document_fee_amount' );
+				$total    = $charge_for * $amount;
+				$text     = esc_html__( ' %1$s extra %2$s' );
+				$doc_text = _n( 'document', 'documents', $charge_for );
+				$label    = sprintf( $text, $charge_for, $doc_text );
+				EDD()->fees->add_fee( $total, $label, 'docs' );
+			}
+		} else {
+			$has_doc_fee = EDD()->fees->get_fee( $total, $label, 'docs' );
+			if ( ! empty( $has_doc_fee ) ) {
+				EDD()->fees->remove_fee( 'docs' );
+			}
+		}
+	}
 }
 
 ?>
