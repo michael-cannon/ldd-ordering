@@ -48,17 +48,11 @@ class LDD_Ordering extends Aihrus_Common {
 		self::actions();
 		self::filters();
 
-		add_action( 'admin_init', array( __CLASS__, 'admin_init' ) );
-		// fixme add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
-		add_action( 'init', array( __CLASS__, 'init' ) );
 		add_shortcode( 'ldd_ordering_shortcode', array( __CLASS__, 'ldd_ordering_shortcode' ) );
 	}
 
 
 	public static function admin_init() {
-		add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_action_links' ), 10, 2 );
-		add_filter( 'plugin_row_meta', array( __CLASS__, 'plugin_row_meta' ), 10, 2 );
-
 		self::$settings_link = '<a href="' . get_admin_url() . 'edit.php?post_type=' . LDD::PT . '&page=' . LDD_Settings::ID . '">' . __( 'Settings', 'ldd-ordering' ) . '</a>';
 
 		self::add_delivery_meta_box();
@@ -84,12 +78,22 @@ class LDD_Ordering extends Aihrus_Common {
 
 
 	public static function actions() {
+		// fixme add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'scripts' ) );
+		add_action( 'admin_init', array( __CLASS__, 'admin_init' ) );
+		add_action( 'edd_post_add_to_cart', array( __CLASS__, 'edd_post_add_to_cart' ), 10, 2 );
+		add_action( 'edd_post_remove_from_cart', array( __CLASS__, 'edd_post_remove_from_cart' ), 10, 2 );
 		add_action( 'edd_update_payment_status', array( __CLASS__, 'edd_update_payment_status' ), 10, 3 );
+		add_action( 'init', array( __CLASS__, 'init' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'scripts' ) );
 	}
 
 
 	public static function filters() {
 		add_filter( 'edd_email_template_tags', array( __CLASS__, 'edd_email_template_tags' ), 10, 3 );
+		add_filter( 'ldd_settings', array( __CLASS__, 'settings' ) );
+		add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_action_links' ), 10, 2 );
+		add_filter( 'plugin_row_meta', array( __CLASS__, 'plugin_row_meta' ), 10, 2 );
 	}
 
 
@@ -160,15 +164,15 @@ class LDD_Ordering extends Aihrus_Common {
 
 	public static function scripts( $atts = array() ) {
 		if ( is_admin() ) {
-			wp_enqueue_script( 'jquery' );
-
-			// fixme wp_register_script( 'jquery-ui-progressbar', self::$plugin_assets . 'js/jquery.ui.progressbar.js', array( 'jquery', 'jquery-ui-core', 'jquery-ui-widget' ), '1.10.3' );
-			// fixme wp_enqueue_script( 'jquery-ui-progressbar' );
-
-			add_action( 'admin_footer', array( 'LDD_Ordering', 'get_scripts' ) );
+			// do something
 		} else {
-			add_action( 'wp_footer', array( 'LDD_Ordering', 'get_scripts' ) );
+			// fixme wp_enqueue_script( 'jquery' );
+
+			// fixme wp_register_script( __CLASS__, self::$plugin_assets . 'js/ldd-ordering.js', array( 'jquery'  ), self::VERSION, true );
+			// fixme wp_enqueue_script( __CLASS__ );
 		}
+
+		add_action( 'wp_footer', array( 'LDD_Ordering', 'get_scripts' ) );
 
 		do_action( 'ldd_ordering_scripts', $atts );
 	}
@@ -273,11 +277,11 @@ class LDD_Ordering extends Aihrus_Common {
 				// pull files over
 				self::add_media( $delivery_id, $file, null, false );
 
-				$page_count += self::getNumPagesPdf( $file );
+				// fixme $page_count += self::getNumPagesPdf( $file );
 			}
 
 			// set page count
-			add_post_meta( $delivery_id, self::KEY_PAGE_COUNT, $page_count );
+			// fixme add_post_meta( $delivery_id, self::KEY_PAGE_COUNT, $page_count );
 		}
 
 		// add point of contact details
@@ -369,11 +373,13 @@ class LDD_Ordering extends Aihrus_Common {
 				'id' => 'special_instructions',
 				'type' => 'textarea',
 			),
+			/** fixme
 			array(
 				'name' => esc_html__( 'Page Count' ),
 				'id' => self::KEY_PAGE_COUNT,
 				'type' => 'text',
 			),
+			 */
 		);
 
 		$fields = apply_filters( 'ldd_ordering_delivery_meta_box', $fields );
@@ -548,6 +554,50 @@ class LDD_Ordering extends Aihrus_Common {
 		$data = sprintf( $text_positioning, $cart, $status, $date, $time, $order_link );
 
 		return $data;
+	}
+
+
+	public static function edd_post_add_to_cart( $download_id, $options ) {
+		if ( empty( $download_id ) )
+			return;
+
+		$fee_id = ldd_get_option( 'filing_fee_id' );
+		if ( $fee_id == $download_id ) {
+			$amount = ldd_get_option( 'filing_fee_amount' );
+			$label  = esc_html__( 'Filing Fee Servicing' );
+			EDD()->fees->add_fee( $amount, $label, 'ffs' );
+		}
+	}
+
+
+	public static function edd_post_remove_from_cart( $cart_key, $item_id ) {
+		if ( empty( $item_id ) )
+			return;
+
+		$fee_id = ldd_get_option( 'filing_fee_id' );
+		if ( $fee_id == $item_id ) {
+			EDD()->fees->remove_fee( 'ffs' );
+		}
+	}
+
+
+	public static function settings( $settings ) {
+		$settings['filing_fee_heading'] = array(
+			'desc' => esc_html__( 'Filings Fees' ),
+			'type' => 'heading',
+		);
+
+		$settings['filing_fee_id'] = array(
+			'title' => esc_html__( 'Download ID' ),
+			'std' => 241,
+		);
+
+		$settings['filing_fee_amount'] = array(
+			'title' => esc_html__( 'Amount' ),
+			'std' => 50,
+		);
+
+		return $settings;
 	}
 
 }
