@@ -615,7 +615,7 @@ class LDD_Ordering extends Aihrus_Common {
 		// error_log( print_r( func_get_args(), true ) . ':' . __LINE__ . ':' . basename( __FILE__ ) );
 
 		// fixme check cart for one delivery option
-		// fixme $text = esc_html__( 'No delivery option selected' );
+		// fixme $text = __( 'Please <a href="/services">choose a delivery</a> option' );
 		// fixme edd_set_error( 'no_delivery_option', $text );
 
 		if ( ! empty( $post['cfm_files']['court_filings'] ) ) {
@@ -630,10 +630,13 @@ class LDD_Ordering extends Aihrus_Common {
 				EDD()->fees->add_fee( $total, $label, 'docs' );
 			}
 		} else {
-			$has_doc_fee = EDD()->fees->get_fee( $total, $label, 'docs' );
+			$has_doc_fee = EDD()->fees->get_fee( 'docs' );
 			if ( ! empty( $has_doc_fee ) ) {
 				EDD()->fees->remove_fee( 'docs' );
 			}
+
+			$text = esc_html__( 'No documents uploaded for filing' );
+			edd_set_error( 'no_documents', $text );
 		}
 	}
 }
