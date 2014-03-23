@@ -583,6 +583,12 @@ class LDD_Ordering extends Aihrus_Common {
 
 
 	public static function settings( $settings ) {
+		$settings['delivery_options'] = array(
+			'title' => esc_html__( 'Delivery Order Restrictions' ),
+			'desc' => esc_html__( 'Only one of these at a time is allowed to be ordered.' ),
+			'std' => '69,146,169',
+		);
+
 		$settings['filing_fee_heading'] = array(
 			'desc' => esc_html__( 'Filings Fees' ),
 			'type' => 'heading',
@@ -618,13 +624,28 @@ class LDD_Ordering extends Aihrus_Common {
 		// fixme $text = __( 'Please <a href="/services">choose a delivery</a> option' );
 		// fixme edd_set_error( 'no_delivery_option', $text );
 
+		$delivery_options = ldd_get_option( 'delivery_options' );
+		$delivery_options = explode( ',', $delivery_options );
+
+		$cart = edd_get_cart_contents();
+
+		$ordered_items = array();
+		foreach ( $cart as $key => $item ) {
+			$ordered_items[] = $item['id'];
+		}
+
+		$delivery_intersect = array_intersect( $delivery_options, $ordered_items );
+		if ( 1 < count( $delivery_intersect ) ) {
+			$text = esc_html__( 'Please remove a delivery option. Only one is allowed per order.' );
+			edd_set_error( 'excess_delivery_item', $text );
+		}
+
 		if ( ! empty( $post['cfm_files']['court_filings'] ) ) {
-			$doc_count = count( $post['cfm_files']['court_filings'] );
-			$charge_for = $doc_count - 1;
-			if ( 1 <= $charge_for ) {
+			$charge_for = count( $post['cfm_files']['court_filings'] );
+			if ( ! empty( $charge_for ) ) {
 				$amount   = ldd_get_option( 'document_fee_amount' );
 				$total    = $charge_for * $amount;
-				$text     = esc_html__( ' %1$s extra %2$s' );
+				$text     = esc_html__( ' %1$s printed %2$s' );
 				$doc_text = _n( 'document', 'documents', $charge_for );
 				$label    = sprintf( $text, $charge_for, $doc_text );
 				EDD()->fees->add_fee( $total, $label, 'docs' );
