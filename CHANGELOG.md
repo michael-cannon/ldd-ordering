@@ -7,8 +7,10 @@
 * Add Delivery Order Restrictions
 * Add document links to delivery record
 * Add edd_email_template_tags
+* Add error message requiring delivery option
 * Add file edit links
 * Add filing fee service charge
+* Add filing fees to checkout
 * Add order summary
 * Add order_date, last_update details
 * Add page count and delivery ids
