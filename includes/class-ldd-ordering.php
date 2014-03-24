@@ -584,6 +584,11 @@ class LDD_Ordering extends Aihrus_Common {
 
 
 	public static function settings( $settings ) {
+		$settings['document_fee_heading'] = array(
+			'desc' => esc_html__( 'Document Fees' ),
+			'type' => 'heading',
+		);
+
 		$settings['delivery_options'] = array(
 			'title' => esc_html__( 'Delivery Order Restrictions' ),
 			'desc' => esc_html__( 'Only one of these at a time is allowed to be ordered.' ),
@@ -615,46 +620,141 @@ class LDD_Ordering extends Aihrus_Common {
 			'std' => 5,
 		);
 
+		$settings['mailing_fee_heading'] = array(
+			'desc' => esc_html__( 'Mailing Fees' ),
+			'type' => 'heading',
+		);
+
+		$settings['mailing_fee_amount'] = array(
+			'title' => esc_html__( 'Amount' ),
+			'std' => 25,
+		);
+
+		$settings['rural_fee_heading'] = array(
+			'desc' => esc_html__( 'Rural Delivery Fees' ),
+			'type' => 'heading',
+		);
+
+		$settings['rural_fee_counties'] = array(
+			'title' => esc_html__( 'Counties' ),
+			'std' => 'Adams,Ferry,Lincoln,Steven,Whitman',
+		);
+
+		$settings['rural_fee_amount'] = array(
+			'title' => esc_html__( 'Amount' ),
+			'std' => 35,
+		);
+
 		return $settings;
 	}
+
 
 	public static function edd_checkout_error_checks( $valid_data, $post ) {
 		// error_log( print_r( func_get_args(), true ) . ':' . __LINE__ . ':' . basename( __FILE__ ) );
 
 		// fixme check cart for one delivery option
-		// fixme $text = __( 'Please <a href="/services">choose a delivery</a> option' );
-		// fixme edd_set_error( 'no_delivery_option', $text );
+		// $text = __( 'Please <a href="/services">choose a delivery</a> option' );
+		// edd_set_error( 'no_delivery_option', $text );
+
+		$doc_counts = 0;
+
+		// fixme require mailing address if mailing is requested
+		$require_return_mailing_address           = false;
+		$require_opposing_counsel_mailing_address = false;
+
+		$text_return_self     = 'Conformed set to be mailed back';
+		$text_return_opposing = 'Conformed set to be mailed to Opposing Counsel';
+
+		if ( ! empty( $post['document_1_delivery_options'] ) ) {
+			$doc_requests = $post['document_1_delivery_options'];
+			if ( in_array( $text_return_self, $doc_requests ) ) {
+				$require_return_mailing_address = true;
+			}
+
+			if ( in_array( $text_return_opposing, $doc_requests ) ) {
+				$require_opposing_counsel_mailing_address = true;
+			}
+
+			$doc_counts += count( $doc_requests );
+		}
+
+		$mailing_fee = ldd_get_option( 'mailing_fee_amount' );
+		if ( $require_return_mailing_address ) {
+			if ( empty( $post['return_mailing_address'] ) ) {
+				$text = esc_html__( 'Please add the return mailing address.' );
+				edd_set_error( 'missing_return_address', $text );
+			}
+
+			$label = esc_html__( 'Return mailing' );
+			EDD()->fees->add_fee( $mailing_fee, $label, 'return_mailing' );
+		} else {
+			$has_mailing_fee = EDD()->fees->get_fee( 'return_mailing' );
+			if ( ! empty( $has_mailing_fee ) ) {
+				EDD()->fees->remove_fee( 'return_mailing' );
+			}
+		}
+
+		if ( $require_opposing_counsel_mailing_address ) {
+			if ( empty( $post['opposing_counsel_mailing_address'] ) ) {
+				$text = esc_html__( 'Please add the return opposing counsel mailing address.' );
+				edd_set_error( 'missing_opposing_return_address', $text );
+			}
+
+			$label = esc_html__( 'Opposing counsel return mailing' );
+			EDD()->fees->add_fee( $mailing_fee, $label, 'opposing_return_mailing' );
+		} else {
+			$has_mailing_fee = EDD()->fees->get_fee( 'opposing_return_mailing' );
+			if ( ! empty( $has_mailing_fee ) ) {
+				EDD()->fees->remove_fee( 'opposing_return_mailing' );
+			}
+		}
+
+		$rural_fee_counties = ldd_get_option( 'rural_fee_counties' );
+		$rural_fee_counties = explode( ',', $rural_fee_counties );
+		if ( ! empty( $post['delivery_county'][0] ) && in_array( $post['delivery_county'][0], $rural_fee_counties ) ) {
+			$total = ldd_get_option( 'rural_fee_amount' );
+			$label = esc_html__( 'Rural delivery' );
+			EDD()->fees->add_fee( $total, $label, 'rural' );
+		} else {
+			$has_rural_fee = EDD()->fees->get_fee( 'rural' );
+			if ( ! empty( $has_rural_fee ) ) {
+				EDD()->fees->remove_fee( 'rural' );
+			}
+		}
+
+		$cart = edd_get_cart_contents();
+
+		$ordered_items     = array();
+		$multiple_delivery = false;
+		foreach ( $cart as $key => $item ) {
+			if ( in_array( $item['id'], $ordered_items ) ) {
+				$multiple_delivery = true;
+			}
+
+			$ordered_items[] = $item['id'];
+		}
 
 		$delivery_options = ldd_get_option( 'delivery_options' );
 		$delivery_options = explode( ',', $delivery_options );
 
-		$cart = edd_get_cart_contents();
-
-		$ordered_items = array();
-		foreach ( $cart as $key => $item ) {
-			$ordered_items[] = $item['id'];
-		}
-
 		$delivery_intersect = array_intersect( $delivery_options, $ordered_items );
-		$delivery_items     = count( $delivery_intersect );
-		if ( 1 < $delivery_items ) {
-			$text = esc_html__( 'Please remove a delivery option. Only one is allowed per order.' );
-			edd_set_error( 'excess_delivery_item', $text );
+
+		$delivery_items = count( $delivery_intersect );
+		if ( 1 < $delivery_items || $multiple_delivery ) {
+			$text = esc_html__( 'Please remove all but one delivery option. Only one is allowed per order.' );
+			edd_set_error( 'excess_delivery_items', $text );
 		} elseif ( empty( $delivery_items ) ) {
 			$text = __( 'Please <a href="/#services">choose a delivery option</a>. One is required per order.' );
 			edd_set_error( 'no_delivery_item', $text );
 		}
 
-		if ( ! empty( $post['cfm_files']['court_filings'] ) ) {
-			$charge_for = count( $post['cfm_files']['court_filings'] );
-			if ( ! empty( $charge_for ) ) {
-				$amount   = ldd_get_option( 'document_fee_amount' );
-				$total    = $charge_for * $amount;
-				$text     = esc_html__( ' %1$s printed %2$s' );
-				$doc_text = _n( 'document', 'documents', $charge_for );
-				$label    = sprintf( $text, $charge_for, $doc_text );
-				EDD()->fees->add_fee( $total, $label, 'docs' );
-			}
+		if ( ! empty( $doc_counts ) ) {
+			$amount   = ldd_get_option( 'document_fee_amount' );
+			$total    = $doc_counts * $amount;
+			$text     = esc_html__( '%1$s printed %2$s' );
+			$doc_text = _n( 'document', 'documents', $doc_counts );
+			$label    = sprintf( $text, $doc_counts, $doc_text );
+			EDD()->fees->add_fee( $total, $label, 'docs' );
 		} else {
 			$has_doc_fee = EDD()->fees->get_fee( 'docs' );
 			if ( ! empty( $has_doc_fee ) ) {
