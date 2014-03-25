@@ -23,10 +23,14 @@
 * Disable page count bits
 * Enable global actions
 * Initial code release 
+* Link errors to checkout form sections
 * PDF counter for small ones
+* Prevent rural same day deliveries
 * Relates docs to delivery record
 * Remove admin only restriction
 * Remove mass processor
 * Remove Process plugin action link
+* Revise pricing formula for single 1-12 docs field and single doc options set
+* Revise settings headings and labels
 * Set plugin URL to aihr.us
 * Verbiage updates

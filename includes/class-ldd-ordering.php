@@ -584,8 +584,8 @@ class LDD_Ordering extends Aihrus_Common {
 
 
 	public static function settings( $settings ) {
-		$settings['document_fee_heading'] = array(
-			'desc' => esc_html__( 'Document Fees' ),
+		$settings['delivery_heading'] = array(
+			'desc' => esc_html__( 'Delivery Details' ),
 			'type' => 'heading',
 		);
 
@@ -595,43 +595,50 @@ class LDD_Ordering extends Aihrus_Common {
 			'std' => '69,146,169',
 		);
 
+		$settings['same_day_delivery_id'] = array(
+			'title' => esc_html__( 'Same Day Delivery ID' ),
+			'desc' => esc_html__( 'Used to help prevent same day delivery in rural locations.' ),
+			'std' => 169,
+		);
+
 		$settings['filing_fee_heading'] = array(
-			'desc' => esc_html__( 'Filings Fees' ),
+			'desc' => esc_html__( 'Filing Details' ),
 			'type' => 'heading',
 		);
 
 		$settings['filing_fee_id'] = array(
-			'title' => esc_html__( 'Download ID' ),
+			'title' => esc_html__( 'Product ID' ),
 			'std' => 241,
 		);
 
 		$settings['filing_fee_amount'] = array(
-			'title' => esc_html__( 'Amount' ),
+			'title' => esc_html__( 'Surcharge Fee' ),
 			'std' => 50,
 		);
 
 		$settings['document_fee_heading'] = array(
-			'desc' => esc_html__( 'Document Fees' ),
+			'desc' => esc_html__( 'Document Details' ),
 			'type' => 'heading',
 		);
 
 		$settings['document_fee_amount'] = array(
-			'title' => esc_html__( 'Amount' ),
+			'title' => esc_html__( 'Fee' ),
+			'desc' => esc_html__( 'Cost per printed document request.' ),
 			'std' => 5,
 		);
 
 		$settings['mailing_fee_heading'] = array(
-			'desc' => esc_html__( 'Mailing Fees' ),
+			'desc' => esc_html__( 'Mailing Details' ),
 			'type' => 'heading',
 		);
 
 		$settings['mailing_fee_amount'] = array(
-			'title' => esc_html__( 'Amount' ),
+			'title' => esc_html__( 'Surcharge Fee' ),
 			'std' => 25,
 		);
 
 		$settings['rural_fee_heading'] = array(
-			'desc' => esc_html__( 'Rural Delivery Fees' ),
+			'desc' => esc_html__( 'Rural Delivery Details' ),
 			'type' => 'heading',
 		);
 
@@ -641,7 +648,7 @@ class LDD_Ordering extends Aihrus_Common {
 		);
 
 		$settings['rural_fee_amount'] = array(
-			'title' => esc_html__( 'Amount' ),
+			'title' => esc_html__( 'Surcharge Fee' ),
 			'std' => 35,
 		);
 
@@ -650,23 +657,16 @@ class LDD_Ordering extends Aihrus_Common {
 
 
 	public static function edd_checkout_error_checks( $valid_data, $post ) {
-		// error_log( print_r( func_get_args(), true ) . ':' . __LINE__ . ':' . basename( __FILE__ ) );
-
-		// fixme check cart for one delivery option
-		// $text = __( 'Please <a href="/services">choose a delivery</a> option' );
-		// edd_set_error( 'no_delivery_option', $text );
-
-		$doc_counts = 0;
-
-		// fixme require mailing address if mailing is requested
 		$require_return_mailing_address           = false;
 		$require_opposing_counsel_mailing_address = false;
 
 		$text_return_self     = 'Conformed set to be mailed back';
 		$text_return_opposing = 'Conformed set to be mailed to Opposing Counsel';
 
-		if ( ! empty( $post['document_1_delivery_options'] ) ) {
-			$doc_requests = $post['document_1_delivery_options'];
+		// a document set always goes to court clerk
+		$doc_count_modifier = 1;
+		if ( ! empty( $post['delivery_options'] ) ) {
+			$doc_requests = $post['delivery_options'];
 			if ( in_array( $text_return_self, $doc_requests ) ) {
 				$require_return_mailing_address = true;
 			}
@@ -675,13 +675,13 @@ class LDD_Ordering extends Aihrus_Common {
 				$require_opposing_counsel_mailing_address = true;
 			}
 
-			$doc_counts += count( $doc_requests );
+			$doc_count_modifier = count( $doc_requests );
 		}
 
 		$mailing_fee = ldd_get_option( 'mailing_fee_amount' );
 		if ( $require_return_mailing_address ) {
 			if ( empty( $post['return_mailing_address'] ) ) {
-				$text = esc_html__( 'Please add the return mailing address.' );
+				$text = __( 'Please <a href="#return_mailing_address_wrap">add the return mailing address</a>.' );
 				edd_set_error( 'missing_return_address', $text );
 			}
 
@@ -696,7 +696,7 @@ class LDD_Ordering extends Aihrus_Common {
 
 		if ( $require_opposing_counsel_mailing_address ) {
 			if ( empty( $post['opposing_counsel_mailing_address'] ) ) {
-				$text = esc_html__( 'Please add the return opposing counsel mailing address.' );
+				$text = __( 'Please <a href="#opposing_counsel_mailing_address_wrap">add the opposing counsel return mailing address</a>.' );
 				edd_set_error( 'missing_opposing_return_address', $text );
 			}
 
@@ -711,10 +711,14 @@ class LDD_Ordering extends Aihrus_Common {
 
 		$rural_fee_counties = ldd_get_option( 'rural_fee_counties' );
 		$rural_fee_counties = explode( ',', $rural_fee_counties );
+
+		$prevent_same_day_delivery = false;
 		if ( ! empty( $post['delivery_county'][0] ) && in_array( $post['delivery_county'][0], $rural_fee_counties ) ) {
 			$total = ldd_get_option( 'rural_fee_amount' );
 			$label = esc_html__( 'Rural delivery' );
 			EDD()->fees->add_fee( $total, $label, 'rural' );
+			
+			$prevent_same_day_delivery = true;
 		} else {
 			$has_rural_fee = EDD()->fees->get_fee( 'rural' );
 			if ( ! empty( $has_rural_fee ) ) {
@@ -724,11 +728,18 @@ class LDD_Ordering extends Aihrus_Common {
 
 		$cart = edd_get_cart_contents();
 
-		$ordered_items     = array();
+		$same_day_delivery_id  = ldd_get_option( 'same_day_delivery_id' );
+		$has_same_day_delivery = false;
+
 		$multiple_delivery = false;
+		$ordered_items     = array();
 		foreach ( $cart as $key => $item ) {
 			if ( in_array( $item['id'], $ordered_items ) ) {
 				$multiple_delivery = true;
+			}
+
+			if ( $same_day_delivery_id == $item['id'] ) {
+				$has_same_day_delivery = true;
 			}
 
 			$ordered_items[] = $item['id'];
@@ -741,27 +752,41 @@ class LDD_Ordering extends Aihrus_Common {
 
 		$delivery_items = count( $delivery_intersect );
 		if ( 1 < $delivery_items || $multiple_delivery ) {
-			$text = esc_html__( 'Please remove all but one delivery option. Only one is allowed per order.' );
+			$text = __( 'Please <a href="#edd_checkout_cart_form">remove all but one delivery</a> option. Only one is allowed per order.' );
 			edd_set_error( 'excess_delivery_items', $text );
 		} elseif ( empty( $delivery_items ) ) {
 			$text = __( 'Please <a href="/#services">choose a delivery option</a>. One is required per order.' );
 			edd_set_error( 'no_delivery_item', $text );
 		}
 
-		if ( ! empty( $doc_counts ) ) {
-			$amount   = ldd_get_option( 'document_fee_amount' );
-			$total    = $doc_counts * $amount;
-			$text     = esc_html__( '%1$s printed %2$s' );
-			$doc_text = _n( 'document', 'documents', $doc_counts );
-			$label    = sprintf( $text, $doc_counts, $doc_text );
-			EDD()->fees->add_fee( $total, $label, 'docs' );
-		} else {
+		if ( $prevent_same_day_delivery && $has_same_day_delivery ) {
+			$text = __( 'Same day delivery for rural locations are not available. Please <a href="#edd_checkout_cart_form">remove same day delivery</a> and choose next day delivery instead.' );
+			edd_set_error( 'prevent_same_day_rural', $text );
+		}
+
+		$has_no_docs = true;
+		if ( ! empty( $post['cfm_files']['court_filings'] ) ) {
+			$charge_for = count( $post['cfm_files']['court_filings'] );
+			if ( ! empty( $charge_for ) ) {
+				$amount    = ldd_get_option( 'document_fee_amount' );
+				$doc_count = $charge_for * $doc_count_modifier;
+				$total     = $doc_count * $amount;
+				$text      = esc_html__( '%1$s printed %2$s' );
+				$doc_text  = _n( 'document', 'documents', $doc_count );
+				$label     = sprintf( $text, $doc_count, $doc_text );
+				EDD()->fees->add_fee( $total, $label, 'docs' );
+
+				$has_no_docs = false;
+			}
+		}
+		
+		if ( $has_no_docs ) {
 			$has_doc_fee = EDD()->fees->get_fee( 'docs' );
 			if ( ! empty( $has_doc_fee ) ) {
 				EDD()->fees->remove_fee( 'docs' );
 			}
 
-			$text = esc_html__( 'No documents uploaded for filing' );
+			$text = __( 'Please <a href="#court_filings_wrap">upload documents for filing</a>.' );
 			edd_set_error( 'no_documents', $text );
 		}
 	}
