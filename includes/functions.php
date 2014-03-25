@@ -13,6 +13,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+if ( ! function_exists( 'ldd_display_piped' ) ) {
+	function ldd_display_piped( $args, $field, $meta ) {
+		echo LDD_Ordering::display_piped( $meta );
+	}
+}
+
+
 if ( ! function_exists( 'ldd_get_attachment_links' ) ) {
 	function ldd_get_attachment_links( $args, $field, $meta ) {
 		$files = array_shift( $meta );

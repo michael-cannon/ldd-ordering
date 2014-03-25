@@ -21,6 +21,7 @@
 * Apply document fees
 * Disable donate and premium links
 * Disable page count bits
+* Display delivery options and mailing address fields
 * Enable global actions
 * Initial code release 
 * Link errors to checkout form sections

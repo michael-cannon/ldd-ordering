@@ -361,14 +361,24 @@ class LDD_Ordering extends Aihrus_Common {
 				'type' => 'text',
 			),
 			array(
-				'name' => esc_html__( 'Courthouse Address' ),
-				'id' => 'courthouse_address',
-				'type' => 'textarea',
+				'name' => esc_html__( 'Delivery Options' ),
+				'id' => 'delivery_options',
+				'type' => 'ldd_display_piped',
 			),
 			array(
 				'name' => esc_html__( 'Court Filings' ),
 				'id' => 'court_filings',
 				'type' => 'ldd_get_attachment_links',
+			),
+			array(
+				'name' => esc_html__( 'Return Mailing Address' ),
+				'id' => 'return_mailing_address',
+				'type' => 'textarea',
+			),
+			array(
+				'name' => esc_html__( 'Opposing Counsel Mailing Address' ),
+				'id' => 'opposing_counsel_mailing_address',
+				'type' => 'textarea',
 			),
 			array(
 				'name' => esc_html__( 'Special Instructions' ),
@@ -808,6 +818,24 @@ class LDD_Ordering extends Aihrus_Common {
 			echo do_shortcode( '[purchase_link id="241"]' );
 			echo '</div>';
 		}
+	}
+
+
+	public static function display_piped( $meta ) {
+		if ( empty( $meta[0] ) )
+			return;
+
+		$fields = explode( '|', $meta[0] );
+		$data   = '<ul>';
+		foreach ( $fields as $key => $option ) {
+			$data .= '<li>';
+			$data .= trim( $option );
+			$data .= '</li>';
+		}
+
+		$data .= '</ul>';
+
+		return $data;
 	}
 }
 
