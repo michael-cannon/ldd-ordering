@@ -654,7 +654,7 @@ class LDD_Ordering extends Aihrus_Common {
 
 		$settings['rural_fee_counties'] = array(
 			'title' => esc_html__( 'Counties' ),
-			'std' => 'Adams,Ferry,Lincoln,Steven,Whitman',
+			'std' => 'Adams,Ferry,Lincoln,Stevens,Whitman',
 		);
 
 		$settings['rural_fee_amount'] = array(
