@@ -25,6 +25,7 @@
 * Enable global actions
 * Initial code release 
 * Link errors to checkout form sections
+* Move filing fees above checkout cart
 * PDF counter for small ones
 * Prevent rural same day deliveries
 * Relates docs to delivery record

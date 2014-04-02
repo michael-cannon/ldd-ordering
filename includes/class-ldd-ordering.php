@@ -81,7 +81,7 @@ class LDD_Ordering extends Aihrus_Common {
 		// fixme add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'scripts' ) );
 		add_action( 'admin_init', array( __CLASS__, 'admin_init' ) );
-		add_action( 'edd_after_checkout_cart', array( __CLASS__, 'edd_after_checkout_cart' ) );
+		add_action( 'edd_before_checkout_cart', array( __CLASS__, 'edd_before_checkout_cart' ) );
 		add_action( 'edd_checkout_error_checks', array( __CLASS__, 'edd_checkout_error_checks' ), 10, 2 );
 		add_action( 'edd_post_add_to_cart', array( __CLASS__, 'edd_post_add_to_cart' ), 10, 2 );
 		add_action( 'edd_post_remove_from_cart', array( __CLASS__, 'edd_post_remove_from_cart' ), 10, 2 );
@@ -802,7 +802,7 @@ class LDD_Ordering extends Aihrus_Common {
 	}
 
 
-	public static function edd_after_checkout_cart() {
+	public static function edd_before_checkout_cart() {
 		$cart   = edd_get_cart_contents();
 		$fee_id = ldd_get_option( 'filing_fee_id' );
 		$show   = true;
