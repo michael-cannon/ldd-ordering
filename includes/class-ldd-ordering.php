@@ -814,7 +814,7 @@ class LDD_Ordering extends Aihrus_Common {
 
 		if ( $show ) {
 			echo '<div class="ldd-ordering">';
-			echo '<h3>Have Filings Fees? Add Them Here!</h3>';
+			echo '<h4>Have Filings Fees? Add Them Here!</h4>';
 			echo do_shortcode( '[purchase_link id="241"]' );
 			echo '</div>';
 		}
